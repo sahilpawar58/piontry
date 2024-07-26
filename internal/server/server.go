@@ -45,4 +45,25 @@ func Run() error {
 	app.Get("/stream/:ssuid/websocket", websocket.New(handlers.StreamWebsocket,websocket.Config{
 		HandshakeTimeout: 10* time.Second,
 	}))
+	app.Get("/stream/ssuid/chat/websocket", websocket.New(handlers.StreamChatWebsocket))
+	app.Get("/stream/:ssuid/viewer/websocket", websocket.New(handlers.StreamViewerWebsocket))
+	app.Static("/","./assets")
+
+	w.Rooms = make(map[string]*w.Room)
+	w.Stream = make(map[string]*w.Room)
+	if *cert != ""{
+		return app.ListenTLS(*addr,*cert, *key)
+	}
+	return app.Listen(*addr)
+
+	go displayKeyFrames()
+	
+}
+
+func displayKeyFrames(){
+	for range time.NewTicker(time.Second * 3 ).C{
+		for _,room := range w.Rooms{
+			room.Peers.displayKeyFrames()
+		}
+	}
 }
